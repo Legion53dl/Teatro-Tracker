@@ -202,7 +202,7 @@
   <header class="masthead">
     <div class="eyebrow">Tsogo Sun Gaming / Montecasino Entertainment World</div>
     <h1>Teatro Structural Audit - Maintenance Tracker</h1>
-    <p class="sub">A live tracker created by Dale Linder to keep track of all jobs that need to be done at the Teatro at Montecasino. Please set your name before editing, adding, or ticking anything off - everyone with this tracker sees the same live status.</p>
+    <p class="sub">A live tracker created by Dale Lindner to keep track of all jobs that need to be done at the Teatro at Montecasino. Please set your name before editing, adding, or ticking anything off - everyone with this tracker sees the same live status.</p>
     <div class="meta-row">
       <span class="sync"><span class="dot busy" id="syncDot"></span><span id="syncTxt">Connecting...</span></span>
     </div>
@@ -291,7 +291,7 @@
       </p>
       <div>
         <label>Your name</label>
-        <input type="text" id="wName" placeholder="e.g. Dale Linder" autocomplete="name"
+        <input type="text" id="wName" placeholder="e.g. Dale Lindner" autocomplete="name"
           onkeydown="if(event.key==='Enter')saveWelcome()">
       </div>
       <p style="margin:0;font-size:11.5px;color:var(--ink-faint)">
@@ -314,6 +314,9 @@ const SB_URL="https://"+[SB_REF,"supabase","co"].join(".");
 const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indjc3hjZ2lpZWVyYnhneHlkaXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMTE0MTcsImV4cCI6MjA5NzY4NzQxN30.4RHmZyL4oaNtmThgNHqpeF4oZXa9I7xTvJ1kdINtxxI";
 const CACHE="teatro-audit-cache-v1";
 const NAMEKEY="teatro-tracker-username";
+// Only this person sees the Delete button and can delete jobs.
+// Must match exactly the name they set in the tracker (case-insensitive).
+const OWNER="Dale Lindner";
 
 let sb=null, online=false;
 let JOBS=[];
@@ -573,7 +576,7 @@ function jobCard(j){
     </div>
     <div class="card-foot">
       <button class="icon-btn" data-edit="${j.id}">&#9998; Edit</button>
-      <button class="icon-btn danger" data-del="${j.id}">&#128465; Delete</button>
+      ${isOwner()?`<button class="icon-btn danger" data-del="${j.id}">&#128465; Delete</button>`:""}
     </div>
   </div>`;
 }
@@ -616,7 +619,9 @@ function delComment(id,i){
   const j=JOBS.find(x=>x.id===id); if(!j) return;
   j.comments.splice(i,1); render(); dbUpsert(j);
 }
+function isOwner(){ return (userName||"").trim().toLowerCase()===OWNER.trim().toLowerCase(); }
 function delJob(id){
+  if(!isOwner()){ alert("Only "+OWNER+" can delete jobs. You can mark a job Done instead, or ask "+OWNER+" to remove it."); return; }
   const j=JOBS.find(x=>x.id===id); if(!j) return;
   if(!confirm(`Delete "${j.title}"? This removes it for everyone.`)) return;
   JOBS=JOBS.filter(x=>x.id!==id); render(); dbDelete(id);
@@ -662,6 +667,7 @@ function setName(){
   if(n===null) return;
   userName=n.trim(); $("#whoLbl").textContent=userName||"Set name";
   try{ localStorage.setItem(NAMEKEY,userName);}catch(e){}
+  render();
 }
 
 /* First-launch name gate: shown once per device until a name is set */
@@ -678,6 +684,7 @@ function saveWelcome(){
   userName=n; $("#whoLbl").textContent=userName;
   try{ localStorage.setItem(NAMEKEY,userName);}catch(e){}
   $("#welcome").classList.remove("show");
+  render();
 }
 
 $("#addBtn").onclick=()=>openModal(null);
