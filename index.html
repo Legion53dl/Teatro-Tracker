@@ -279,6 +279,32 @@
   </div>
 </div>
 
+<!-- First-launch welcome / name gate -->
+<div class="scrim" id="welcome">
+  <div class="modal" style="max-width:440px">
+    <h2>Welcome to the Teatro Tracker</h2>
+    <div class="form">
+      <p style="margin:0;font-size:13.5px;color:var(--ink-soft);line-height:1.55">
+        This is the live maintenance board for the Teatro at Montecasino. Anything you tick off,
+        comment on, or add is shared with everyone in real time &mdash; so before you start,
+        please tell us who you are. Your name will be shown on the notes you leave.
+      </p>
+      <div>
+        <label>Your name</label>
+        <input type="text" id="wName" placeholder="e.g. Dale Linder" autocomplete="name"
+          onkeydown="if(event.key==='Enter')saveWelcome()">
+      </div>
+      <p style="margin:0;font-size:11.5px;color:var(--ink-faint)">
+        Saved on this device only &mdash; you won't be asked again here. You can change it any time
+        with the person icon in the toolbar.
+      </p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn gold" id="wSave">Start tracking</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // The Supabase address is assembled from parts at runtime. Corporate email/URL
 // filters (e.g. Mimecast) rewrite any literal web link they find inside a file,
@@ -638,10 +664,27 @@ function setName(){
   try{ localStorage.setItem(NAMEKEY,userName);}catch(e){}
 }
 
+/* First-launch name gate: shown once per device until a name is set */
+function maybeWelcome(){
+  let saved="";
+  try{ saved=localStorage.getItem(NAMEKEY)||""; }catch(e){}
+  if(saved.trim()) return;                 // already introduced - skip
+  $("#welcome").classList.add("show");
+  setTimeout(()=>$("#wName").focus(),60);
+}
+function saveWelcome(){
+  const n=$("#wName").value.trim();
+  if(!n){ $("#wName").focus(); return; }    // name is required to proceed
+  userName=n; $("#whoLbl").textContent=userName;
+  try{ localStorage.setItem(NAMEKEY,userName);}catch(e){}
+  $("#welcome").classList.remove("show");
+}
+
 $("#addBtn").onclick=()=>openModal(null);
 $("#mCancel").onclick=closeModal;
 $("#mSave").onclick=saveModal;
 $("#scrim").onclick=e=>{ if(e.target===$("#scrim")) closeModal(); };
+$("#wSave").onclick=saveWelcome;
 $("#q").oninput=render;
 $("#fPriority").onchange=render;
 $("#fSource").onchange=render;
@@ -650,5 +693,6 @@ $("#refreshBtn").onclick=load;
 $("#printBtn").onclick=()=>window.print();
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
 
+maybeWelcome();
 load();
 </script>
